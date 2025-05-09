@@ -1,60 +1,57 @@
-/**
- * Database service for player-related operations
- */
+// 📦 Importa el helper para asignar roles aleatoriamente
 const { assignRoles } = require("../utils/helpers");
 
+// 🧠 Base de datos en memoria: un arreglo que guarda a los jugadores
 const players = [];
 
-/**
- * Get all players
- * @returns {Array} Array of player objects
- */
+/* ────────────────────────────────────────────────
+  ✅ Obtener todos los jugadores
+──────────────────────────────────────────────── */
 const getAllPlayers = () => {
   return players;
 };
 
-/**
- * Add a new player
- * @param {string} nickname - Player's nickname
- * @param {string} socketId - Player's socket ID
- * @returns {Object} The created player
- */
+/* ────────────────────────────────────────────────
+  ✅ Agregar un nuevo jugador con nickname y socketId
+  ✔️ Inicializa su score en 0
+──────────────────────────────────────────────── */
 const addPlayer = (nickname, socketId) => {
   const newPlayer = { id: socketId, nickname, score: 0 };
   players.push(newPlayer);
   return newPlayer;
 };
 
-/**
- * Find a player by their socket ID
- * @param {string} socketId - Player's socket ID
- * @returns {Object|null} Player object or null if not found
- */
+/* ────────────────────────────────────────────────
+  ✅ Buscar jugador por su socketId
+  ✔️ Se usa en lógica como selectPolo o updateScore
+──────────────────────────────────────────────── */
 const findPlayerById = (socketId) => {
   return players.find((player) => player.id === socketId) || null;
 };
 
-/**
- * Assign roles to all players
- * @returns {Array} Array of players with assigned roles
- */
+/* ────────────────────────────────────────────────
+  ✅ Asignar roles a los jugadores
+  ✔️ Conserva los puntajes anteriores
+  ✔️ Usa assignRoles() desde helpers.js
+──────────────────────────────────────────────── */
 const assignPlayerRoles = () => {
   const playersWithRoles = assignRoles(players);
-  // Keep scores intact while assigning new roles
+
+  // Conserva puntuación previa al reasignar roles
   playersWithRoles.forEach((updated) => {
     const existing = findPlayerById(updated.id);
     if (existing) updated.score = existing.score || 0;
   });
 
+  // Reemplaza el array de jugadores con los que ya tienen rol
   players.splice(0, players.length, ...playersWithRoles);
   return players;
 };
 
-/**
- * Find players by role
- * @param {string|Array} role - Role or array of roles to find
- * @returns {Array} Array of players with the specified role(s)
- */
+/* ────────────────────────────────────────────────
+  ✅ Buscar jugadores por rol (o array de roles)
+  ✔️ Útil para notificar a "polo", "marco", etc.
+──────────────────────────────────────────────── */
 const findPlayersByRole = (role) => {
   if (Array.isArray(role)) {
     return players.filter((player) => role.includes(player.role));
@@ -62,26 +59,25 @@ const findPlayersByRole = (role) => {
   return players.filter((player) => player.role === role);
 };
 
-/**
- * Get all game data (includes players)
- * @returns {Object} Object containing players array
- */
+/* ────────────────────────────────────────────────
+  ✅ Obtener el estado general del juego (jugadores)
+──────────────────────────────────────────────── */
 const getGameData = () => {
   return { players };
 };
 
-/**
- * Reset game data (clears all players)
- */
+/* ────────────────────────────────────────────────
+  ❌ Reiniciar completamente el juego (borra todos los jugadores)
+  ✔️ Se usa si quieres reiniciar desde cero
+──────────────────────────────────────────────── */
 const resetGame = () => {
   players.splice(0, players.length);
 };
 
-/**
- * Update score of a player
- * @param {string} socketId - Player's socket ID
- * @param {number} delta - Points to add (can be negative)
- */
+/* ────────────────────────────────────────────────
+  🔢 Actualizar la puntuación de un jugador
+  ✔️ Se puede sumar o restar puntos
+──────────────────────────────────────────────── */
 const updateScore = (socketId, delta) => {
   const player = findPlayerById(socketId);
   if (player) {
@@ -90,37 +86,37 @@ const updateScore = (socketId, delta) => {
   return player;
 };
 
-/**
- * Check if someone won (>= 100 points)
- * @returns {Object|null} Player who won or null
- */
+/* ────────────────────────────────────────────────
+  🏆 Verifica si alguien ha ganado (≥ 100 pts)
+──────────────────────────────────────────────── */
 const checkForWinner = () => {
   return players.find((player) => player.score >= 100) || null;
 };
 
-/**
- * Get players sorted by score descending
- * @returns {Array}
- */
+/* ────────────────────────────────────────────────
+  📊 Obtener jugadores ordenados por puntaje (desc)
+  ✔️ Para mostrar rankings
+──────────────────────────────────────────────── */
 const getPlayersSortedByScore = () => {
   return [...players].sort((a, b) => b.score - a.score);
 };
 
-/**
- * Get players sorted alphabetically
- * @returns {Array}
- */
+/* ────────────────────────────────────────────────
+  🔠 Obtener jugadores ordenados alfabéticamente
+──────────────────────────────────────────────── */
 const getPlayersSortedByName = () => {
   return [...players].sort((a, b) => a.nickname.localeCompare(b.nickname));
 };
 
-/**
- * Reset only scores
- */
+/* ────────────────────────────────────────────────
+  🔁 Reinicia solo los puntajes de todos los jugadores
+  ✔️ Se usa al reiniciar el juego pero manteniendo usuarios
+──────────────────────────────────────────────── */
 const resetScores = () => {
   players.forEach((p) => (p.score = 0));
 };
 
+// 📤 Exporta todas las funciones para uso en controladores
 module.exports = {
   getAllPlayers,
   addPlayer,
